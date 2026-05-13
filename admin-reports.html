@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DSDC MIS — Admin Reports</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .admin-sidebar { background: linear-gradient(180deg, #0d0e1a 0%, #1a1040 100%); }
+    .report-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .report-card {
+      background: #fff; border-radius: var(--radius); padding: 20px; 
+      box-shadow: var(--shadow); cursor: pointer; transition: var(--transition);
+      text-align: center; border: 2px solid transparent;
+    }
+    .report-card:hover, .report-card.active { border-color: var(--primary); transform: translateY(-2px); background: var(--primary-light); }
+    .report-card .rc-icon { font-size: 30px; margin-bottom: 8px; }
+    .report-card h4 { font-size: 13px; font-weight: 700; color: var(--text); }
+    .report-card p { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar admin-sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">👑</div>
+      <div class="logo-text"><h2>DSDC Admin</h2><p>Admin Portal</p></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Admin Navigation</div>
+      <ul>
+        <li class="nav-item"><a href="admin.html"><span class="nav-icon">🏠</span><span>Dashboard</span></a></li>
+        <li class="nav-item active"><a href="admin-reports.html"><span class="nav-icon">📊</span><span>All Reports</span></a></li>
+      </ul>
+      <div class="nav-section-title" style="margin-top:16px;">Account</div>
+      <ul>
+        <li class="nav-item"><button onclick="logout()"><span class="nav-icon">🚪</span><span>Sign Out</span></button></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">A</div>
+        <div class="user-details"><h4>Admin</h4><p>DSDC Administrator</p></div>
+      </div>
+    </div>
+  </aside>
+  <div class="main-content">
+    <header class="top-header">
+      <h1 class="page-title" id="page-title">Admin Reports</h1>
+      <div class="header-actions"><span class="header-time" id="header-time"></span></div>
+    </header>
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-header-left"><h2>Global Reports & Analytics</h2><p>View data across all 6 centres</p></div>
+        <button class="btn btn-success" onclick="exportCurrentAdminReport()" id="export-btn" style="display:none;">📥 Export to Excel</button>
+      </div>
+
+      <!-- Report Type Selector -->
+      <div class="report-cards">
+        <div class="report-card active" id="rc-trainers" onclick="selectAdminReport('trainers',this)"><div class="rc-icon">🧑‍🏫</div><h4>Trainers</h4><p>All trainer details</p></div>
+        <div class="report-card" id="rc-courses" onclick="selectAdminReport('courses',this)"><div class="rc-icon">📚</div><h4>Courses</h4><p>All course details</p></div>
+        <div class="report-card" id="rc-batches" onclick="selectAdminReport('batches',this)"><div class="rc-icon">👥</div><h4>Batches</h4><p>All batch details</p></div>
+        <div class="report-card" id="rc-all-students" onclick="selectAdminReport('all-students',this)"><div class="rc-icon">👤</div><h4>All Students</h4><p>Complete student list</p></div>
+        <div class="report-card" id="rc-fees" onclick="selectAdminReport('fees',this)"><div class="rc-icon">💰</div><h4>Fees Collection</h4><p>All fee records</p></div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar" id="filter-bar">
+        <div class="form-group" id="f-centre-wrap">
+          <label>Centre</label>
+          <select class="form-control" id="rf-centre" onchange="runAdminReport()">
+            <option value="">All Centres</option>
+          </select>
+        </div>
+        <div class="form-group" id="f-course-wrap" style="display:none;">
+          <label>Course</label>
+          <select class="form-control" id="rf-course" onchange="runAdminReport()"><option value="">All Courses</option></select>
+        </div>
+        <div class="form-group" id="f-status-wrap" style="display:none;">
+          <label>Status</label>
+          <select class="form-control" id="rf-status" onchange="runAdminReport()">
+            <option value="">All</option><option value="pending">Pending</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="form-group" id="f-fees-wrap" style="display:none;">
+          <label>Fee Status</label>
+          <select class="form-control" id="rf-fees" onchange="runAdminReport()">
+            <option value="">All</option><option value="paid">Paid (any amount)</option><option value="unpaid">Not Paid</option>
+          </select>
+        </div>
+        <div class="form-group" id="f-from-wrap">
+          <label>From Date</label>
+          <input type="date" class="form-control" id="rf-from" onchange="runAdminReport()"/>
+        </div>
+        <div class="form-group" id="f-to-wrap">
+          <label>To Date</label>
+          <input type="date" class="form-control" id="rf-to" onchange="runAdminReport()"/>
+        </div>
+        <div class="form-group">
+          <label>Search</label>
+          <input type="text" class="form-control" id="rf-search" placeholder="Search..." oninput="runAdminReport()"/>
+        </div>
+        <button class="btn btn-ghost" onclick="clearAdminRFilters()">Clear</button>
+      </div>
+
+      <!-- Summary bar -->
+      <div id="report-summary" style="padding:12px 16px;background:#fff;border-radius:8px;margin-bottom:16px;font-size:13px;display:flex;gap:24px;box-shadow:0 2px 8px rgba(0,0,0,0.04);display:none;">
+        <span>Records: <strong id="rs-count">0</strong></span>
+        <span id="rs-extra"></span>
+      </div>
+
+      <!-- Report Table -->
+      <div class="card" id="report-card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap">
+            <table id="report-table">
+              <thead id="report-thead"></thead>
+              <tbody id="report-tbody"><tr><td class="table-empty" style="padding:40px;text-align:center;">Select a report type to get started</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/admin_functions.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', async () => {
+    const authData = await requireAuth(['admin']);
+    if (authData) {
+      loadAdminReportsPage();
+    }
+  });
+</script>
+</body>
+</html>

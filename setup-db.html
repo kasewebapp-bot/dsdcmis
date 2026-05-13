@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DSDC MIS - DB Setup</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; background: #f4f7fe; }
+    .box { background: #fff; padding: 20px; border-radius: 8px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; color: #333; }
+    button { padding: 10px 20px; background: #6c63ff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #5a52d5; }
+    #log { margin-top: 20px; background: #222; color: #0f0; padding: 15px; border-radius: 4px; height: 300px; overflow-y: auto; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Database & Account Setup</h2>
+    <p>This tool helps you sync your <strong>Centre Accounts</strong> from Google Sheets into Firebase Authentication.</p>
+    
+    <div style="margin-bottom: 20px;">
+      <label style="display:block; margin-bottom: 5px; font-weight: bold;">Google Apps Script URL:</label>
+      <input type="text" id="sheetUrl" placeholder="Paste your Web App URL here..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+      <p style="font-size: 11px; color: #666; margin-top: 5px;">This is the URL you got after "Deploy > New Deployment" in Google Sheets.</p>
+    </div>
+
+    <button id="startBtn" onclick="runSetup()">Sync from Google Sheets →</button>
+    <div id="log">Waiting to start...</div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const logEl = document.getElementById('log');
+    function log(msg) { logEl.innerHTML += `<div>${msg}</div>`; logEl.scrollTop = logEl.scrollHeight; }
+
+    // Pre-fill URL if it exists in app.js
+    if (SHEET_BACKUP_URL) document.getElementById('sheetUrl').value = SHEET_BACKUP_URL;
+
+    async function ensureAccount(email, password, role, centreName) {
+      let uid;
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        uid = cred.user.uid;
+        log(`✓ Created Auth user: ${email}`);
+      } catch (e) {
+        if (e.code === 'auth/email-already-in-use') {
+          log(`  Updating Auth user: ${email}...`);
+          // Note: Client SDK can't change other users' passwords. 
+          // This will only link the Firestore profile.
+          const cred = await auth.signInWithEmailAndPassword(email, password).catch(() => null);
+          if (cred) uid = cred.user.uid;
+          else {
+              // We can't get the UID without signing in, so we fetch it from Firestore if it exists
+              const snap = await db.collection('users').where('email', '==', email).get();
+              if (!snap.empty) uid = snap.docs[0].id;
+              else {
+                  log(`<span style="color:orange">⚠️ Could not update password for ${email}. Please update it manually in Firebase Console.</span>`);
+                  return;
+              }
+          }
+        } else {
+          throw e;
+        }
+      }
+
+      // Add to 'users' collection
+      await db.collection('users').doc(uid).set({ email, role }, { merge: true });
+      log(`✓ Updated /users/${uid} (Role: ${role})`);
+
+      // Add to 'centres' collection if applicable
+      if (role === 'centre') {
+        const cDoc = await db.collection('centres').doc(uid).get();
+        if (!cDoc.exists) {
+          await db.collection('centres').doc(uid).set({
+            centreName: centreName,
+            setupComplete: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          log(`✓ Initialized /centres/${uid} for ${centreName}`);
+        } else {
+          log(`  Centre data already exists for ${centreName}`);
+        }
+      }
+    }
+
+    async function runSetup() {
+      const url = document.getElementById('sheetUrl').value.trim();
+      if (!url) { alert('Please enter your Google Sheets Web App URL.'); return; }
+
+      document.getElementById('startBtn').disabled = true;
+      logEl.innerHTML = 'Starting sync...<br>';
+      
+      try {
+        log('📡 Fetching data from Google Sheets...');
+        const response = await fetch(url + '?sheet=Centres');
+        const result = await response.json();
+
+        if (result.status !== 'success') {
+          throw new Error(result.message || 'Failed to fetch data');
+        }
+
+        const centresFromSheet = result.data;
+        log(`📂 Found ${centresFromSheet.length} centres in sheet.<br>`);
+
+        // 1. Admin (Static)
+        await ensureAccount('admin@dsdc.com', 'Admin921', 'admin', null);
+
+        // 2. Centres from Sheet
+        for (const c of centresFromSheet) {
+          if (!c.name || !c.pass) {
+              log(`<span style="color:red">Skipping: Missing "name" or "pass" column in sheet.</span>`);
+              continue;
+          }
+          const email = c.name.toLowerCase().replace(/ /g, '_') + '@dsdc.com';
+          // NO PADDING - Use exactly what's in the sheet
+          await ensureAccount(email, String(c.pass), 'centre', c.name);
+        }
+
+        log('<br><strong style="color:#fff;">🎉 SYNC COMPLETE!</strong>');
+        await auth.signOut();
+      } catch (err) {
+        log(`<span style="color:red">Error: ${err.message}</span>`);
+        console.error(err);
+      }
+      document.getElementById('startBtn').disabled = false;
+    }
+  </script>
+</body>
+</html>

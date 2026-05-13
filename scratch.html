@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><head><title>Scratch</title></head><body>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="js/app.js"></script>
+<script>
+  window.onload = async () => {
+    const snap = await db.collection('centres').get();
+    const data = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    document.body.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+  };
+</script>
+</body></html>
