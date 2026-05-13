@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSDC MIS — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      background: linear-gradient(135deg, #0d0e1a 0%, #1a1040 60%, #0a1628 100%);
+      font-family: 'Inter', sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+    .bg-blob { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.25; pointer-events: none; }
+    .b1 { width: 400px; height: 400px; background: #6c63ff; top: -80px; left: -80px; }
+    .b2 { width: 300px; height: 300px; background: #00d4aa; bottom: -60px; right: -60px; }
+    .grid-lines {
+      position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(108,99,255,0.06) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(108,99,255,0.06) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+    .login-left {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 60px;
+      position: relative; z-index: 10;
+    }
+    @media (max-width: 900px) { .login-left { display: none; } }
+    .left-content { max-width: 420px; }
+    .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 40px; }
+    .brand-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, #6c63ff, #00d4aa);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 900; color: #fff;
+    }
+    .brand h1 { color: #fff; font-size: 26px; font-weight: 900; letter-spacing: 0.5px; }
+    .brand p { color: rgba(255,255,255,0.4); font-size: 12px; letter-spacing: 0.5px; }
+    .left-content h2 {
+      color: #fff; font-size: 38px; font-weight: 900;
+      line-height: 1.15; margin-bottom: 16px;
+    }
+    .left-content h2 span {
+      background: linear-gradient(135deg, #6c63ff, #00d4aa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .left-content > p { color: rgba(255,255,255,0.5); font-size: 15px; line-height: 1.7; margin-bottom: 36px; }
+    .feature-list { display: flex; flex-direction: column; gap: 14px; }
+    .feature-item {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 12px 16px;
+    }
+    .feature-item span:first-child { font-size: 20px; }
+    .feature-item p { color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500; }
+
+    /* RIGHT SIDE - FORM */
+    .login-right {
+      width: 480px;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      padding: 60px 50px;
+      position: relative; z-index: 10;
+      flex-shrink: 0;
+    }
+    @media (max-width: 900px) {
+      .login-right { width: 100%; }
+      body { justify-content: center; }
+    }
+    .login-form-wrap { width: 100%; }
+    .login-form-wrap .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-muted); font-size: 13px; font-weight: 500;
+      text-decoration: none; margin-bottom: 32px;
+      transition: color 0.2s;
+    }
+    .login-form-wrap .back-link:hover { color: var(--primary); }
+    .login-title { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .login-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+    .role-tabs {
+      display: grid; grid-template-columns: 1fr 1fr;
+      background: var(--bg); border-radius: 10px;
+      padding: 4px; margin-bottom: 28px;
+    }
+    .role-tab {
+      padding: 10px; text-align: center;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      color: var(--text-muted);
+      border: none; background: none; font-family: 'Inter', sans-serif;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .role-tab.active {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6c63ff, #9b8cff);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-top: 8px;
+      box-shadow: 0 4px 15px rgba(108,99,255,0.35);
+    }
+    .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,99,255,0.45); }
+    .login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .forgot-link { text-align: right; margin-bottom: 4px; }
+    .forgot-link a { font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; }
+    .divider-or {
+      display: flex; align-items: center; gap: 12px;
+      margin: 20px 0; color: var(--text-muted); font-size: 12px;
+    }
+    .divider-or::before, .divider-or::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .candidate-link {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 12px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 13px; font-weight: 600;
+      transition: all 0.2s;
+    }
+    .candidate-link:hover { border-color: var(--secondary); color: var(--secondary-dark); background: rgba(0,212,170,0.04); }
+    .error-box {
+      background: #fff5f5; border: 1px solid #fed7d7;
+      border-radius: 8px; padding: 10px 14px;
+      color: #c53030; font-size: 13px; margin-top: 12px; display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="grid-lines"></div>
+
+  <!-- LEFT PANEL -->
+  <div class="login-left">
+    <div class="left-content">
+      <div class="brand">
+        <img src="https://res.cloudinary.com/dohsh2sal/image/upload/v1773303953/copy_of_district_skill_o5cnkk_47abf0.png" alt="DSDC Logo" style="width:56px;height:56px;border-radius:14px;background:#fff;padding:4px;object-fit:contain;">
+        <div>
+          <h1>DSDC</h1>
+          <p>Management Information System</p>
+        </div>
+      </div>
+      <h2>The Smart Way to<br/>Manage <span>Training Centres</span></h2>
+      <p>Track courses, batches, students, fees and attendance — all from one powerful platform built for DSDC's 6 centres.</p>
+      <div class="feature-list">
+        <div class="feature-item"><span>🏫</span><p>Multi-Centre Dashboard</p></div>
+        <div class="feature-item"><span>📊</span><p>Reports & Excel Exports</p></div>
+        <div class="feature-item"><span>💰</span><p>Fees Collection & Receipts</p></div>
+        <div class="feature-item"><span>✅</span><p>Attendance Management</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="login-right">
+    <div class="login-form-wrap">
+      <a href="index.html" class="back-link">← Back to Home</a>
+      <h2 class="login-title">Welcome Back 👋</h2>
+      <p class="login-subtitle">Sign in to your DSDC MIS account</p>
+
+      <form id="login-form" action="javascript:void(0);" method="POST" onsubmit="doLogin(); return false;">
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Username</label>
+          <input type="text" class="form-control" id="user-input" placeholder="Your designated username" style="height:48px;" name="username" autocomplete="username"/>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Password</label>
+          <input type="password" class="form-control" id="password" placeholder="Your password" style="height:48px;" name="password" autocomplete="current-password"/>
+        </div>
+        <div id="error-box" class="error-box"></div>
+        <button type="submit" class="login-btn" id="login-btn" style="filter: brightness(1.1); box-shadow: 0 4px 15px rgba(108,99,255,0.6);">Sign In →</button>
+      </form>
+
+      <div class="divider-or">or</div>
+      <a href="register.html" class="candidate-link">📝 Register as a Candidate</a>
+    </div>
+  </div>
+
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function showError(msg) {
+      const el = document.getElementById('error-box');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    async function doLogin() {
+      const userName = document.getElementById('user-input').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('login-btn');
+      const errBox = document.getElementById('error-box');
+      errBox.style.display = 'none';
+
+      if (!userName || !password) { showError('Please enter username and password.'); return; }
+      btn.disabled = true; btn.textContent = 'Signing in...';
+
+      try {
+        // Fetch users from Google Sheet
+        const response = await fetch(SHEET_BACKUP_URL + '?sheet=Passwords');
+        const result = await response.json();
+        
+        if (result.status !== 'success') {
+          throw new Error(result.message || 'Failed to fetch users');
+        }
+        
+        const users = result.data;
+        let userRow = null;
+        
+        // Find keys that match "username" and "password" ignoring case and whitespace
+        if (users && users.length > 0) {
+          const uKeys = Object.keys(users[0]);
+          const unameKey = uKeys.find(k => k.trim().toLowerCase() === 'username');
+          const passKey = uKeys.find(k => k.trim().toLowerCase() === 'password');
+          
+          if (unameKey && passKey) {
+            userRow = users.find(u => 
+              String(u[unameKey] || '').trim() === userName && 
+              String(u[passKey] || '').trim() === password.trim()
+            );
+          }
+        }
+        
+        if (!userRow) {
+          showError('Invalid username or password.');
+          btn.disabled = false; btn.textContent = 'Sign In →';
+          return;
+        }
+
+        // Login successful
+        // Determine role and redirect
+        if (userName === 'Admin') {
+          localStorage.setItem('dsdc_role', 'admin');
+          localStorage.setItem('dsdc_user', 'Admin');
+          window.location.href = 'admin.html';
+          return;
+        } 
+        
+        if (CENTRE_CODES.includes(userName)) {
+          // It's a centre
+          localStorage.setItem('dsdc_role', 'centre');
+          localStorage.setItem('dsdc_user', userName);
+          
+          // Need to find the centre's document ID in Firestore
+          const centreSnap = await db.collection('centres').where('centreName', '==', userName).limit(1).get();
+          // Or if branchCode is used: await db.collection('centres').where('branchCode', '==', userName).limit(1).get();
+          // Let's check users collection instead because users have email: username.toLowerCase() + '@dsdc.com'
+          const usersSnap = await db.collection('users').where('email', '==', userName.toLowerCase() + '@dsdc.com').limit(1).get();
+          
+          let uid = null;
+          if (!usersSnap.empty) {
+            uid = usersSnap.docs[0].id;
+          } else {
+            // RECOVERY FALLBACK: Try to login to Firebase Auth with the old default email to retrieve the old UID!
+            // Do this BEFORE checking branchCode, in case they accidentally created a new document today.
+            try {
+              const email = userName.toLowerCase() + '@dsdc.com';
+              const cred = await auth.signInWithEmailAndPassword(email, password);
+              if (cred && cred.user) {
+                uid = cred.user.uid;
+                // Permanently link this UID to the branchCode so we don't need Firebase Auth next time
+                await db.collection('centres').doc(uid).set({ branchCode: userName }, { merge: true });
+                await auth.signOut();
+              }
+            } catch(e) {
+              console.warn('Recovery fallback failed', e);
+            }
+            
+            // If recovery failed (e.g. password changed), try checking branchCode
+            if (!uid) {
+              const centreCodeSnap = await db.collection('centres').where('branchCode', '==', userName).limit(1).get();
+              if (!centreCodeSnap.empty) {
+                uid = centreCodeSnap.docs[0].id;
+              } else {
+                const centreNameSnap = await db.collection('centres').where('centreName', '==', userName).limit(1).get();
+                if (!centreNameSnap.empty) {
+                  uid = centreNameSnap.docs[0].id;
+                }
+              }
+            }
+          }
+          
+          if (uid) {
+            localStorage.setItem('dsdc_uid', uid);
+            window.top.location.href = 'centre-portal.html';
+          } else {
+            // Cannot find centre in Firestore at all
+            localStorage.setItem('dsdc_uid', userName);
+            window.top.location.href = 'setup-profile.html';
+          }
+          return;
+        }
+        
+        // If not Admin or Centre, assume Trainer
+        const trainerSnap = await db.collection('trainers').where('username', '==', userName).limit(1).get();
+        if (trainerSnap.empty) {
+          showError('Trainer profile not found in system.');
+          btn.disabled = false; btn.textContent = 'Sign In →';
+          return;
+        }
+        const trainerDoc = trainerSnap.docs[0];
+        const trainerData = trainerDoc.data();
+
+        localStorage.setItem('dsdc_role', 'trainer');
+        localStorage.setItem('dsdc_user', userName);
+        localStorage.setItem('dsdc_trainer_id', trainerDoc.id);
+        localStorage.setItem('dsdc_trainer_centre', trainerData.centreId || '');
+        window.top.location.href = 'trainer-portal.html';
+
+      } catch (err) {
+        showError('Login failed: ' + (err.message || 'Invalid credentials.'));
+        btn.disabled = false; btn.textContent = 'Sign In →';
+      }
+    }
+
+    document.addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+  </script>
+</body>
+</html>
